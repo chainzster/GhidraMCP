@@ -287,6 +287,13 @@ def list_strings(offset: int = 0, limit: int = 2000, filter: str = None) -> list
         params["filter"] = filter
     return safe_get("strings", params)
 
+@mcp.tool()
+def save_project() -> str:
+    """
+    Save the current Ghidra project/program to disk.
+    """
+    return safe_post("save_program", {})
+
 def main():
     parser = argparse.ArgumentParser(description="MCP server for Ghidra")
     parser.add_argument("--ghidra-server", type=str, default=DEFAULT_GHIDRA_SERVER,

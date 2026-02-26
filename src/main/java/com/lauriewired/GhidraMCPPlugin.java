@@ -43,6 +43,7 @@ import ghidra.program.model.data.Undefined1DataType;
 import ghidra.program.model.listing.Variable;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.ClangToken;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.Options;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -339,6 +340,10 @@ public class GhidraMCPPlugin extends Plugin {
             int limit = parseIntOrDefault(qparams.get("limit"), 100);
             String filter = qparams.get("filter");
             sendResponse(exchange, listDefinedStrings(offset, limit, filter));
+        });
+
+        server.createContext("/save_program", exchange -> {
+            sendResponse(exchange, saveProgram());
         });
 
         server.setExecutor(null);
@@ -1411,6 +1416,23 @@ public class GhidraMCPPlugin extends Plugin {
             }
         }
         return sb.toString();
+    }
+
+    private String saveProgram() {
+        Program program = getCurrentProgram();
+        if (program == null) return "No program loaded";
+
+        DomainFile df = program.getDomainFile();
+        if (df == null) return "No domain file associated with program";
+        if (df.isReadOnly()) return "Program is read-only, cannot save";
+
+        try {
+            df.save(new ConsoleTaskMonitor());
+            return "Program saved successfully";
+        } catch (Exception e) {
+            Msg.error(this, "Failed to save program", e);
+            return "Failed to save program: " + e.getMessage();
+        }
     }
 
     /**
